@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIP Bookings Mallorca</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #000; --text: #fff; --field-bg: rgba(255,255,255,0.1); --border: rgba(255,255,255,0.3); --accent: #ff00cc; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); }
+    a { color: var(--accent); text-decoration: none; }
+    button, input, select, textarea { font-family: inherit; font-size: 1rem; }
+    .container { width: 90%; max-width: 420px; margin: 2rem auto; display: flex; flex-direction: column; animation: fadeInUp 0.6s ease-out; }
+    nav { margin-bottom: 1rem; text-align: center; }
+    .lang-btn { background: transparent; border: none; color: var(--text); margin: 0 5px; font-weight: 600; cursor: pointer; padding: 5px; border-radius: 5px; transition: background-color 0.2s; }
+    .lang-btn.active { text-decoration: underline; background-color: var(--field-bg); }
+    form[role='form'] { display: flex; flex-direction: column; }
+    .field { margin-bottom: 1.2rem; position: relative; }
+    label { display: block; margin-bottom: 0.35rem; font-weight: 600; opacity: 0.9; }
+    select, input, textarea { width: 100%; background: var(--field-bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; color: var(--text); }
+    input[type="date"], input[type="time"] { color-scheme: dark; }
+    .hidden { display: none; }
+    .btn { border: none; border-radius: 30px; padding: 0.85rem; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; }
+    .btn:disabled { background: #555; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 0, 204, 0.4); }
+    footer { margin-top: 2rem; text-align: center; font-size: 0.9rem; opacity: 0.8; }
+    footer a { font-weight: 600; }
+    input:focus, select:focus, button:focus { outline: 2px solid var(--accent); }
+    #venue-links a { margin-right: 15px; font-size: 0.9em; }
+    #venue-links a:hover { text-decoration: underline; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav id="lang-switch"></nav>
+    <p class="intro" id="intro-text"></p>
+
+    <form id="booking-form" role="form" novalidate>
+      <div class="field">
+        <label for="service" id="label-service"></label>
+        <select id="service" required></select>
+      </div>
+      
+      <div class="field hidden" id="boat-price-field">
+        <label for="boat-price" id="label-boat-price"></label>
+        <select id="boat-price"></select>
+      </div>
+
+      <div class="field hidden" id="venue-field">
+        <label for="venue" id="label-venue"></label>
+        <div id="venue-links" style="margin-bottom: 8px;"></div>
+        <select id="venue"></select>
+      </div>
+
+      <div class="field">
+        <label for="date" id="label-date"></label>
+        <input type="date" id="date" required>
+      </div>
+
+      <div class="field">
+        <label for="time" id="label-time"></label>
+        <input type="time" id="time" required>
+      </div>
+
+      <div class="field">
+        <label for="participants" id="label-participants"></label>
+        <input type="number" id="participants" min="1" value="1" required>
+      </div>
+
+      <div class="field">
+        <label for="phone" id="label-phone"></label>
+        <input type="tel" id="phone" placeholder="+34 600 000 000" required>
+      </div>
+
+      <div class="field">
+        <label for="notes" id="label-notes"></label>
+        <textarea id="notes"></textarea>
+      </div>
+
+      <button type="submit" class="btn" id="submit-btn" disabled></button>
+    </form>
+
+    <footer>
+      <p id="help-text"></p>
+      <p id="disclaimer-text"></p>
+    </footer>
+  </div>
+
+<script>
+(() => {
+    const translations = {
+        EN: {
+            intro: "Book your VIP experience in Mallorca.",
+            labels: { service: "Select Service", boatPrice: "Select Price Range", venue: "Select Nightclub", date: "Desired Date", time: "Desired Time", participants: "Number of People", phone: "Phone Number", notes: "Additional Notes" },
+            placeholders: { service: "-- Choose a service --", boatPrice: "-- Choose a price range --", venue: "-- Choose a venue --" },
+            services: { "Jetski 1h": "Jetski 1h", "Boat Rental": "Boat Rental", "VIP Table": "VIP Table" },
+            boatPrices: { range1: "€400 - €900 (Half-day boats)", range2: "€900 - €1,800 (Full-day boats)", range3: "€1,800 - €5,300 (Yachts)" },
+            venues: { BCM: "BCM", Lio: "Lio Mallorca", Amok: "Amok" },
+            venueLinks: "See venues:",
+            submit: "Book via WhatsApp",
+            help: "Need help? Chat with us →",
+            disclaimer: "Bookings are pending until confirmed via WhatsApp."
+        },
+        ES: {
+            intro: "Reserva tu experiencia VIP en Mallorca.",
+            labels: { service: "Selecciona el Servicio", boatPrice: "Elige Rango de Precio", venue: "Elige Discoteca", date: "Fecha Deseada", time: "Hora Deseada", participants: "Número de Personas", phone: "Número de Teléfono", notes: "Notas Adicionales" },
+            placeholders: { service: "-- Elige un servicio --", boatPrice: "-- Elige un rango --", venue: "-- Elige una discoteca --" },
+            services: { "Jetski 1h": "Jetski 1h", "Boat Rental": "Alquiler de Barco", "VIP Table": "Mesa VIP" },
+            boatPrices: { range1: "400€ - 900€ (Barcos media jornada)", range2: "900€ - 1.800€ (Barcos día completo)", range3: "1.800€ - 5.300€ (Yates)" },
+            venues: { BCM: "BCM", Lio: "Lio Mallorca", Amok: "Amok" },
+            venueLinks: "Ver discotecas:",
+            submit: "Reservar por WhatsApp",
+            help: "¿Necesitas ayuda? Habla con nosotros →",
+            disclaimer: "Las reservas quedan pendientes hasta su confirmación por WhatsApp."
+        },
+        IT: {
+            intro: "Prenota la tua esperienza VIP a Maiorca.",
+            labels: { service: "Seleziona Servizio", boatPrice: "Seleziona Fascia di Prezzo", venue: "Seleziona Discoteca", date: "Data Desiderata", time: "Orario Desiderato", participants: "Numero di Persone", phone: "Numero di Telefono", notes: "Note Aggiuntive" },
+            placeholders: { service: "-- Scegli un servizio --", boatPrice: "-- Scegli una fascia di prezzo --", venue: "-- Scegli una discoteca --" },
+            services: { "Jetski 1h": "Jetski 1h", "Boat Rental": "Noleggio Barche", "VIP Table": "Tavolo VIP" },
+            boatPrices: { range1: "€400 - €900 (Barche mezza giornata)", range2: "€900 - €1.800 (Barche giornata intera)", range3: "€1.800 - €5.300 (Yacht)" },
+            venues: { BCM: "BCM", Lio: "Lio Mallorca", Amok: "Amok" },
+            venueLinks: "Vedi locali:",
+            submit: "Prenota via WhatsApp",
+            help: "Bisogno di aiuto? Parla con noi →",
+            disclaimer: "Le prenotazioni sono in attesa di conferma tramite WhatsApp."
+        },
+        FR: {
+            intro: "Réservez votre expérience VIP à Majorque.",
+            labels: { service: "Sélectionnez le Service", boatPrice: "Choisissez la Gamme de Prix", venue: "Choisissez la Boîte de Nuit", date: "Date Souhaitée", time: "Heure Souhaitée", participants: "Nombre de Personnes", phone: "Numéro de Téléphone", notes: "Notes Additionnelles" },
+            placeholders: { service: "-- Choisissez un service --", boatPrice: "-- Choisissez une gamme de prix --", venue: "-- Choisissez une boîte de nuit --" },
+            services: { "Jetski 1h": "Jetski 1h", "Boat Rental": "Location de Bateau", "VIP Table": "Table VIP" },
+            boatPrices: { range1: "400€ - 900€ (Bateaux demi-journée)", range2: "900€ - 1.800€ (Bateaux journée complète)", range3: "1.800€ - 5.300€ (Yachts)" },
+            venues: { BCM: "BCM", Lio: "Lio Mallorca", Amok: "Amok" },
+            venueLinks: "Voir les clubs:",
+            submit: "Réserver via WhatsApp",
+            help: "Besoin d'aide? Discutez avec nous →",
+            disclaimer: "Les réservations sont en attente de confirmation via WhatsApp."
+        },
+        DE: {
+            intro: "Buchen Sie Ihr VIP-Erlebnis auf Mallorca.",
+            labels: { service: "Dienstleistung Wählen", boatPrice: "Preisspanne Wählen", venue: "Nachtclub Wählen", date: "Gewünschtes Datum", time: "Gewünschte Uhrzeit", participants: "Anzahl der Personen", phone: "Telefonnummer", notes: "Zusätzliche Anmerkungen" },
+            placeholders: { service: "-- Dienstleistung wählen --", boatPrice: "-- Preisspanne wählen --", venue: "-- Nachtclub wählen --" },
+            services: { "Jetski 1h": "Jetski 1h", "Boat Rental": "Bootsverleih", "VIP Table": "VIP-Tisch" },
+            boatPrices: { range1: "400€ - 900€ (Halbtagesboote)", range2: "900€ - 1.800€ (Ganztagesboote)", range3: "1.800€ - 5.300€ (Yachten)" },
+            venues: { BCM: "BCM", Lio: "Lio Mallorca", Amok: "Amok" },
+            venueLinks: "Clubs ansehen:",
+            submit: "Per WhatsApp buchen",
+            help: "Brauchen Sie Hilfe? Chatten Sie mit uns →",
+            disclaimer: "Reservierungen sind bis zur Bestätigung per WhatsApp ausstehend."
+        }
+    };
+
+    const venueLinks = {
+        Lio: 'https://www.instagram.com/liopalmamallorca?igsh=MXN4bm9oNjQzc3czZg==',
+        BCM: 'https://www.instagram.com/bcmmallorca?igsh=MWFxZDZqZWk5MHY0dw==',
+        Amok: 'https://www.instagram.com/amokmallorca?igsh=YmIxeWJxM3Z5YWo4'
+    };
+    
+    const whatsappNumber = "+34654663043";
+
+    const el = {
+        langSwitch: document.getElementById('lang-switch'),
+        intro: document.getElementById('intro-text'),
+        form: document.getElementById('booking-form'),
+        serviceSelect: document.getElementById('service'),
+        boatPriceField: document.getElementById('boat-price-field'),
+        boatPriceSelect: document.getElementById('boat-price'),
+        venueField: document.getElementById('venue-field'),
+        venueSelect: document.getElementById('venue'),
+        venueLinks: document.getElementById('venue-links'),
+        dateInput: document.getElementById('date'),
+        submitBtn: document.getElementById('submit-btn'),
+        help: document.getElementById('help-text'),
+        disclaimer: document.getElementById('disclaimer-text')
+    };
+
+    let currentLang = localStorage.getItem('lang') || 'ES';
+
+    function init() {
+        // Set minimum date to today
+        el.dateInput.min = new Date().toISOString().split("T")[0];
+
+        renderLangButtons();
+        applyLanguage(currentLang);
+        
+        el.form.addEventListener('input', validateForm);
+        el.form.addEventListener('submit', onSubmit);
+        el.serviceSelect.addEventListener('change', updateConditionalFields);
+    }
+
+    function renderLangButtons() {
+        Object.keys(translations).forEach(code => {
+            const btn = document.createElement('button');
+            btn.textContent = code;
+            btn.className = 'lang-btn';
+            btn.addEventListener('click', () => setLanguage(code));
+            el.langSwitch.appendChild(btn);
+        });
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('lang', lang);
+        applyLanguage(lang);
+    }
+
+    function applyLanguage(lang) {
+        const t = translations[lang];
+        document.documentElement.lang = lang.toLowerCase();
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === lang));
+
+        el.intro.textContent = t.intro;
+        
+        // Set all labels from translation file
+        for (const key in t.labels) {
+            const labelEl = document.getElementById(`label-${key}`);
+            if(labelEl) labelEl.textContent = t.labels[key];
+        }
+
+        populateSelect(el.serviceSelect, t.placeholders.service, t.services);
+        populateSelect(el.boatPriceSelect, t.placeholders.boatPrice, t.boatPrices);
+        populateSelect(el.venueSelect, t.placeholders.venue, t.venues);
+
+        // Populate venue links
+        el.venueLinks.innerHTML = `<strong>${t.venueLinks}</strong> <a href="${venueLinks.BCM}" target="_blank">BCM</a> <a href="${venueLinks.Lio}" target="_blank">Lio</a> <a href="${venueLinks.Amok}" target="_blank">Amok</a>`;
+
+        el.submitBtn.textContent = t.submit;
+        el.help.innerHTML = `<a href="https://wa.me/${whatsappNumber}">${t.help}</a>`;
+        el.disclaimer.textContent = t.disclaimer;
+
+        updateConditionalFields();
+        validateForm();
+    }
+
+    function populateSelect(selectEl, placeholder, options) {
+        selectEl.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+        for (const key in options) {
+            const option = document.createElement('option');
+            option.value = key; // Use key as value (e.g., 'range1', 'Boat Rental')
+            option.textContent = options[key]; // Use value as text (e.g., '€400 - €900...', 'Alquiler de Barco')
+            selectEl.appendChild(option);
+        }
+    }
+
+    function updateConditionalFields() {
+        const selectedService = el.serviceSelect.value;
+        
+        const showBoatPrices = selectedService === 'Boat Rental';
+        const showVenues = selectedService === 'VIP Table';
+
+        el.boatPriceField.classList.toggle('hidden', !showBoatPrices);
+        el.boatPriceSelect.required = showBoatPrices;
+        
+        el.venueField.classList.toggle('hidden', !showVenues);
+        el.venueSelect.required = showVenues;
+
+        if (!showBoatPrices) el.boatPriceSelect.value = '';
+        if (!showVenues) el.venueSelect.value = '';
+        
+        validateForm();
+    }
+    
+    function validateForm() {
+        el.submitBtn.disabled = !el.form.checkValidity();
+    }
+
+    function onSubmit(e) {
+        e.preventDefault();
+        if (!el.form.checkValidity()) return;
+
+        const serviceText = el.serviceSelect.options[el.serviceSelect.selectedIndex].text;
+        let detailsText = "";
+
+        if (el.serviceSelect.value === 'Boat Rental') {
+            detailsText = `\n- *Rango de Precio:* ${el.boatPriceSelect.options[el.boatPriceSelect.selectedIndex].text}`;
+        } else if (el.serviceSelect.value === 'VIP Table') {
+            detailsText = `\n- *Discoteca:* ${el.venueSelect.options[el.venueSelect.selectedIndex].text}`;
+        }
+        
+        const participants = document.getElementById('participants').value;
+        const phone = document.getElementById('phone').value;
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const notes = document.getElementById('notes').value || '-';
+
+        const message = `*Nueva Reserva VIP*\n\n- *Servicio:* ${serviceText}${detailsText}\n- *Fecha:* ${date}\n- *Hora:* ${time}\n- *Personas:* ${participants}\n- *Teléfono:* ${phone}\n- *Notas:* ${notes}`;
+
+        window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
